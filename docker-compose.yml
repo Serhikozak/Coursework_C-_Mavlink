@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ardupilot_sitl:
+    build:
+      context: .
+      dockerfile: Dockerfile.sitl
+    image: ardupilot-sitl-perfect:v2
+    container_name: ardupilot
+    ports:
+      - "5760:5760"
+      #- "14550:14550/udp"
+    command: /ardupilot/build/sitl/bin/arducopter -I0 --model + --speedup 1 --home=50.4501,30.5234,130,0
+   
+    
+    restart: always
+   

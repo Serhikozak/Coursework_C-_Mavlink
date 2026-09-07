@@ -1,0 +1,25 @@
+{
+    "name": "MavLink Autopilot",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "workspaceFolder": "/MavLink_Autopilot",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/MavLink_Autopilot,type=bind",
+    "remoteUser": "mult",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "twxs.cmake",
+                "ms-vscode.cpptools-extension-pack"
+            ]
+        }
+    },
+    // Коли приїде CP2104, цей рядок дозволить контейнеру бачити USB-UART перехідник у Linux
+    "runArgs": [
+        "--privileged",
+        "-v", "/dev:/dev"
+    ],
+    "shutdownAction": "stopContainer"
+}

@@ -1,0 +1,39 @@
+FROM ardupilot/ardupilot-dev-base:latest
+
+USER root
+
+# 1. Налаштовуємо мовні локалі для захисту від помилок кодування в Pip
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV AUTOTEST_HEADLESS=1
+
+# 2. Встановлюємо Python 3.9, системні залежності розробника та утиліту мережі `ip`
+RUN apt-get update -y && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get update -y && \
+    apt-get install -y python3.9 python3.9-dev python3.9-distutils iproute2 sudo git && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
+
+# 3. Оновлюємо pip та встановлюємо суворі версії бібліотек під Python 3.9
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install --no-cache-dir --no-compile --break-system-packages \
+    empy==3.3.4 \
+    pymavlink \
+    pexpect \
+    future \
+    mavproxy==1.8.70
+
+# 4. Клонуємо репозиторій ArduPilot всередину образу (щоб він не залежав від зовнішніх папок)
+WORKDIR /ardupilot
+COPY vehicle/ /ardupilot
+
+RUN git config --global --add safe.directory /ardupilot
+
+RUN modules/waf/waf-light configure --board sitl && \
+    modules/waf/waf-light copter
+
+# 5. Прописуємо системні шляхи для бінарників
+ENV PATH=/usr/local/bin:/root/.local/bin:$PATH
+
+WORKDIR /ardupilot/Tools/autotest

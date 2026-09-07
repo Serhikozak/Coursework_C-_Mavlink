@@ -1,0 +1,3 @@
+/MavLink_Autopilot/build/CMakeFiles/autopilot_node.dir
+/MavLink_Autopilot/build/CMakeFiles/edit_cache.dir
+/MavLink_Autopilot/build/CMakeFiles/rebuild_cache.dir

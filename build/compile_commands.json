@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/MavLink_Autopilot/build",
+  "command": "/usr/bin/c++  -I/MavLink_Autopilot/mavlink -I/MavLink_Autopilot/mavlink/common -I/MavLink_Autopilot/mavlink/development  -Wno-address-of-packed-member -g -std=gnu++17 -o CMakeFiles/autopilot_node.dir/src/main.cpp.o -c /MavLink_Autopilot/src/main.cpp",
+  "file": "/MavLink_Autopilot/src/main.cpp",
+  "output": "CMakeFiles/autopilot_node.dir/src/main.cpp.o"
+},
+{
+  "directory": "/MavLink_Autopilot/build",
+  "command": "/usr/bin/c++  -I/MavLink_Autopilot/mavlink -I/MavLink_Autopilot/mavlink/common -I/MavLink_Autopilot/mavlink/development  -Wno-address-of-packed-member -g -std=gnu++17 -o CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.o -c /MavLink_Autopilot/src/MissionProcessor.cpp",
+  "file": "/MavLink_Autopilot/src/MissionProcessor.cpp",
+  "output": "CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.o"
+},
+{
+  "directory": "/MavLink_Autopilot/build",
+  "command": "/usr/bin/c++  -I/MavLink_Autopilot/mavlink -I/MavLink_Autopilot/mavlink/common -I/MavLink_Autopilot/mavlink/development  -Wno-address-of-packed-member -g -std=gnu++17 -o CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o -c /MavLink_Autopilot/src/DroneStateMachine.cpp",
+  "file": "/MavLink_Autopilot/src/DroneStateMachine.cpp",
+  "output": "CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o"
+}
+]
