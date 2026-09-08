@@ -1,36 +1,23 @@
 #include "../include/DroneAutopilotImpl.h"
-#include "../include/DroneStateMachine.h"
 #include <cmath>
 #include <iostream>
 #include <chrono>
 #include <cstring>
-#include <mavlink.h>
+#include <common/mavlink.h>
 #include <sys/socket.h> 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-// Глобальний місток для лінкування з DroneStateMachine
-DroneAutopilotImpl* g_autopilot_ptr = nullptr;
-
-bool mavlinkSendDropCommand(int sock, const sockaddr_in& remote_addr, float drop_x, float drop_y, float drop_alt, SharedData& shared) {
-    if (g_autopilot_ptr) {
-        return g_autopilot_ptr->sendDropCommandWithAck(sock, remote_addr, drop_x, drop_y, drop_alt, shared);
-    }
-    return false;
-}
-
 DroneAutopilotImpl::DroneAutopilotImpl() 
     : m_current_wp_index(0), m_state(FlightState::MANUAL_OVERRIDE) 
 {
     m_patrol_points = {{0.0f, 40.0f}, {40.0f, 40.0f}, {40.0f, 0.0f}, {0.0f, 0.0f}};
-    g_autopilot_ptr = this; // зберігаємо покажчик
 }
 
 DroneAutopilotImpl::~DroneAutopilotImpl() {
     stop();
-    g_autopilot_ptr = nullptr;
 }
 
 float DroneAutopilotImpl::currentPointToTarget(const Coord& p1, const Coord& p2) const {
@@ -55,7 +42,7 @@ void DroneAutopilotImpl::start(SharedData& shared) {
     shared.is_running = true;
     m_io_thread = std::thread(&DroneAutopilotImpl::runIO, this, std::ref(shared));
     m_mission_processor_thread = std::thread(&DroneAutopilotImpl::runMissionProcessor, this, std::ref(shared));
-    std::cout << "[SYSTEM] Потоки успішно активовано за розділеною FSM архітектурою.\n";
+    std::cout << "[SYSTEM] Потоки успішно активовано за розділеною архітектурою файлів.\n";
 }
 
 void DroneAutopilotImpl::stop() {
@@ -142,7 +129,7 @@ bool DroneAutopilotImpl::sendDropCommandWithAck(int sock, const sockaddr_in& rem
         sendto(sock, buf, len, 0, (struct sockaddr*)&remote_addr, remote_len);
 
         auto start_wait = std::chrono::steady_clock::now();
-        while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_wait).count() < MAV_ACK_TIMEOUT_MS) {
+        while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_wait).count() < ACK_TIMEOUT_MS) {
             if (shared.link_lost || !shared.operator_switch) return false;
             uint8_t rx_buf[MAVLINK_MAX_PACKET_LEN];
             int rx_len = recvfrom(sock, rx_buf, sizeof(rx_buf), 0, nullptr, nullptr);

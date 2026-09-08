@@ -1,1 +1,1 @@
-/usr/bin/c++  -Wno-address-of-packed-member -g CMakeFiles/autopilot_node.dir/src/main.cpp.o CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.o CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o -o autopilot_node 
+/usr/bin/c++  -Wno-address-of-packed-member CMakeFiles/autopilot_node.dir/src/main.cpp.o CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.o CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o -o autopilot_node 

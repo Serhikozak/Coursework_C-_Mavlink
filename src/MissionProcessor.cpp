@@ -4,163 +4,171 @@
 #include <iostream>
 #include <chrono>
 #include <algorithm>
-#include <mavlink.h>
-
-// Мережеві системні заголовки Linux для UDP сокету
+#include <cstring>
 #include <sys/socket.h> 
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-DroneAutopilotImpl::DroneAutopilotImpl() 
-    : m_current_wp_index(0), m_state(FlightState::MANUAL_OVERRIDE) 
-{
-    // Задаємо маршрут патрулювання в метрах довкола умовної бази
-    m_patrol_points = {{0.0f, 40.0f}, {40.0f, 40.0f}, {40.0f, 0.0f}, {0.0f, 0.0f}};
-}
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
-DroneAutopilotImpl::~DroneAutopilotImpl() {
-    stop();
-}
-
-float DroneAutopilotImpl::currentPointToTarget(const Coord& p1, const Coord& p2) const {
-    return std::hypot(p1.x - p2.x, p1.y - p2.y);
-}
-
-void DroneAutopilotImpl::start(SharedData& shared) {
-    shared.is_running = true;
-    // Активация двух независимых параллельных потоков бортового компьютера
-    m_io_thread = std::thread(&DroneAutopilotImpl::runIO, this, std::ref(shared));
-    m_mission_processor_thread = std::thread(&DroneAutopilotImpl::runMissionProcessor, this, std::ref(shared));
-    std::cout << "[SYSTEM] Потоки IO та MissionProcessor успішно активовано.\n";
-}
-
-void DroneAutopilotImpl::stop() {
-    if (m_io_thread.joinable()) m_io_thread.join();
-    if (m_mission_processor_thread.joinable()) m_mission_processor_thread.join();
-}
-
-// ПОТІК 1: Реалізація асинхронного введення-виведення UDP та Failsafe
-void DroneAutopilotImpl::runIO(SharedData& shared) {
-    std::cout << "[⚙️ IO_THREAD] Потік мережевого введення-виведення запущено (100 Гц).\n";
+// ПОТІК 2: Обробник місії та станів (MissionProcessor / FSM)
+void DroneAutopilotImpl::runMissionProcessor(SharedData& shared) {
+    std::cout << "[🧠 MissionProcessor] Потік обробки логіки FSM запущен (Частота: 10 Гц).\n";
     
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
-        std::cerr << "[⚙️ IO_THREAD] Помилка створення сокету.\n";
-        shared.is_running = false;
-        return;
-    }
-    // Робимо сокет неблокуючим, щоб таймаут Failsafe працював без зависань
-    int flags = fcntl(sock, F_GETFL, 0);
-    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-
-    sockaddr_in local_addr{};
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    local_addr.sin_port = htons(14551);
-    
-     if (bind(sock, (struct sockaddr*)&local_addr, sizeof(local_addr)) < 0) {
-        std::cerr << "[⚙️ IO_THREAD] Помилка прив'язки до порту 14551.\n";
-        close(sock);
-        shared.is_running = false;
-        return;
-    }
-    // Буфер для сетевых пакетов, структуры парсера и адресации ответов
-    uint8_t rx_buffer[MAVLINK_MAX_PACKET_LEN];
-
-    // Змінні для розшифровки MAVLink
-    mavlink_message_t msg;
-    mavlink_status_t status;
-
-    sockaddr_in remote_addr{};
-    socklen_t remote_addr_len = sizeof(remote_addr);
-
-    auto last_packet_time = std::chrono::steady_clock::now();
-    const auto timeout_duration = std::chrono::seconds(3); 
-
     while (shared.is_running) {
-        int bytes_received = recvfrom(sock, rx_buffer, sizeof(rx_buffer), 0,
-                                      (struct sockaddr*)&remote_addr, &remote_addr_len);
-        auto now = std::chrono::steady_clock::now();
+        RcChannels local_rc;
+        
+        if (shared.link_lost || !shared.operator_switch) {
+            m_state = FlightState::MANUAL_OVERRIDE;
+        }
 
-        if (bytes_received > 0) {
-            last_packet_time = now;
-            shared.link_lost = false;
+        Telemetry local_telemetry;
+        Coord local_target;
+        bool local_target_found;
+        {
+            std::lock_guard<std::mutex> lock(shared.mtx);
+            local_telemetry = shared.telemetry;
+            local_target = shared.target_pos;
+            local_target_found = shared.target_found;
+        }
 
-            for (int i = 0; i < bytes_received; ++i) {
-                if (mavlink_parse_char(MAVLINK_COMM_0, rx_buffer[i], &msg, &status)) {
-                    switch (msg.msgid) {
-                        case MAVLINK_MSG_ID_LOCAL_POSITION_NED: {
-                            mavlink_local_position_ned_t local_pos;
-                            mavlink_msg_local_position_ned_decode(&msg, &local_pos);
-                            {
-                                std::lock_guard<std::mutex> lock(shared.mtx);
-                                shared.telemetry.pos.x = local_pos.x;
-                                shared.telemetry.pos.y = local_pos.y;
-                                shared.telemetry.z     = local_pos.z;
-                            }
-                            break;
-                        }
-                        case MAVLINK_MSG_ID_ATTITUDE: {
-                            mavlink_attitude_t attitude;
-                            mavlink_msg_attitude_decode(&msg, &attitude);
-                            {
-                                std::lock_guard<std::mutex> lock(shared.mtx);
-                                shared.telemetry.current_yaw = attitude.yaw;
-                            }
-                            break;
-                        }
-                        case MAVLINK_MSG_ID_VFR_HUD: {
-                            mavlink_vfr_hud_t vfr_hud;
-                            mavlink_msg_vfr_hud_decode(&msg, &vfr_hud);
-                            {
-                                std::lock_guard<std::mutex> lock(shared.mtx);
-                                shared.telemetry.groundSpeed = vfr_hud.groundspeed;
-                            }
-                            break;
-                        }
+        switch (m_state) {
+            case FlightState::MANUAL_OVERRIDE:
+                local_rc.roll = local_rc.pitch = local_rc.throttle = local_rc.yaw = RC_IGNORE;
+                local_rc.aux_drop = 1000; 
+
+                if (shared.operator_switch && !shared.link_lost) {
+                    m_state = FlightState::PATROLLING;
+                    std::cout << "[MissionProcessor] Стан [" << static_cast<int>(m_state) << "]: Перехід в режим ПАТРУЛЮВАННЯ.\n";
+                }
+                break;
+
+            case FlightState::PATROLLING: {
+                Coord current_wp = m_patrol_points[m_current_wp_index];
+                float distanceToWaypoint = currentPointToTarget(local_telemetry.pos, current_wp);
+
+                std::cout << "[MissionProcessor] Патрулювання -> Маршрутна WP #" << m_current_wp_index 
+                          << " | Дистанція: " << distanceToWaypoint << "м | Курс Yaw: " << local_telemetry.current_yaw << " рад\n";
+
+                local_rc.pitch = RC_MIN_FORWARD; 
+                local_rc.throttle = RC_CENTER;   
+
+                float target_angle = std::atan2(current_wp.y - local_telemetry.pos.y, current_wp.x - local_telemetry.pos.x);
+                float yaw_error = target_angle - local_telemetry.current_yaw;
+                
+                while (yaw_error > M_PI)  yaw_error -= 2.0f * M_PI;
+                while (yaw_error < -M_PI) yaw_error += 2.0f * M_PI;
+
+                if (std::abs(yaw_error) > 0.05f) {
+                    local_rc.yaw = RC_CENTER + std::clamp(static_cast<int>(yaw_error * 150.0f), -150, 150);
+                } else {
+                    local_rc.yaw = RC_CENTER; 
+                }
+
+                if (distanceToWaypoint < 3.0f) {
+                    m_current_wp_index = (m_current_wp_index + 1) % m_patrol_points.size();
+                }
+
+                if (local_target_found) {
+                    m_state = FlightState::TARGET_ATTACK;
+                    std::cout << "[MissionProcessor] [ALERT] Зміна стану -> [" << static_cast<int>(m_state) << "] ПЕРЕХВАТ ТА АТАКА ЦІЛІ!\n";
+                }
+                break;
+            }
+
+            case FlightState::TARGET_ATTACK: {
+                float dist_to_target = currentPointToTarget(local_telemetry.pos, local_target);
+                
+                float Z0 = -local_telemetry.z; 
+                if (Z0 < 1.0f) Z0 = 10.0f;          
+                
+                float V0 = local_telemetry.groundSpeed; 
+                if (V0 < 0.1f) V0 = 0.1f;               
+                
+                constexpr float m = 1.5f;   
+                constexpr float d = 0.15f;  
+                constexpr float l = 0.05f;  
+
+                float tof = AnaliticalSolver::calcTimeOfFlight(Z0, V0, m, d, l);
+                float drop_lead_distance = AnaliticalSolver::calcHDistance(tof, V0, m, d, l);
+                
+                std::cout << "[MissionProcessor] АТАКА. Висота: " << Z0 << "м | Швидкість V0: " << V0 << "м/с\n"
+                          << "                   Час падіння (ToF): " << tof << "с | Упередження скиду: " << drop_lead_distance << "м\n"
+                          << "                   Залишок дистанції до цілі: " << dist_to_target << "м\n";
+
+                float target_angle = std::atan2(local_target.y - local_telemetry.pos.y, local_target.x - local_telemetry.pos.x);
+                float yaw_error = target_angle - local_telemetry.current_yaw;
+                while (yaw_error > M_PI)  yaw_error -= 2.0f * M_PI;
+                while (yaw_error < -M_PI) yaw_error += 2.0f * M_PI;
+                
+                if (std::abs(yaw_error) > 0.05f) {
+                    local_rc.yaw = RC_CENTER + std::clamp(static_cast<int>(yaw_error * 150.0f), -150, 150);
+                } else {
+                    local_rc.yaw = RC_CENTER;
+                }
+
+                if (dist_to_target > (drop_lead_distance + 10.0f)) {
+                    local_rc.pitch = RC_MAX_FORWARD; 
+                    local_rc.throttle = 1650;        
+                } else {
+                    local_rc.pitch = 1430;
+                    local_rc.throttle = 1500;
+                    
+                    if (dist_to_target <= drop_lead_distance) {
+                        m_state = FlightState::PAYLOAD_DROP; 
                     }
                 }
+                break;
             }
-        } else {
-            if (now - last_packet_time > timeout_duration) {
-                if (!shared.link_lost) {
-                    std::cerr << "[⚙️ IO_THREAD] [ALERT] Потеря связи с симулятором! Активирован FAILSAFE.\n";
+
+            case FlightState::PAYLOAD_DROP: {
+                std::cout << "[MissionProcessor] Стан [" << static_cast<int>(m_state) 
+                          << "]: 🎯 НАД БАЛІСТИЧНОЮ ТОЧКОЮ! Ініціалізація мережевого MAVLink 2 скиду...\n";
+                local_rc.pitch = RC_CENTER;
+                local_rc.throttle = RC_CENTER;
+
+                float current_alt = -local_telemetry.z;
+                
+                sockaddr_in target_drop_addr{};
+                target_drop_addr.sin_family = AF_INET;
+                target_drop_addr.sin_port = htons(14551);
+                target_drop_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
+
+                int drop_sock = socket(AF_INET, SOCK_DGRAM, 0);
+                int s_flags = fcntl(drop_sock, F_GETFL, 0);
+                fcntl(drop_sock, F_SETFL, s_flags | O_NONBLOCK);
+
+                bool drop_confirmed = sendDropCommandWithAck(drop_sock, target_drop_addr, local_telemetry.pos.x, local_telemetry.pos.y, current_alt, shared);
+                close(drop_sock);
+
+                if (drop_confirmed) {
+                    std::cout << "[MissionProcessor] [🎯 SUCCESS] Скид успішно валідовано! Активація сервоприводу.\n";
+                    local_rc.aux_drop = 2000; 
+                    m_state = FlightState::MISSION_COMPLETE;
+                } else {
+                    std::cerr << "[MissionProcessor] [❌ ALERT] Скид скасовано оператором або немає відповіді ACK від чекера!\n";
+                    m_state = FlightState::PATROLLING; 
                 }
-                shared.link_lost = true;
-            }
-        }
-
-        if (!shared.link_lost && remote_addr.sin_port != 0) {
-            RcChannels current_rc;
-            {
-                std::lock_guard<std::mutex> lock(shared.mtx);
-                current_rc = shared.output_rc;
+                break;
             }
 
-            mavlink_message_t tx_msg;
-            uint8_t tx_buffer[MAVLINK_MAX_PACKET_LEN];
-
-            mavlink_msg_rc_channels_override_pack(
-                1, 1, &tx_msg, 1, 1,
-                current_rc.roll, 
-                current_rc.pitch, 
-                current_rc.throttle, 
-                current_rc.yaw,
-                0, 
-                current_rc.aux_drop,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
-            );
-
-            uint16_t tx_len = mavlink_msg_to_send_buffer(tx_buffer, &tx_msg);
-            sendto(sock, tx_buffer, tx_len, 0, (struct sockaddr*)&remote_addr, remote_addr_len);
+            case FlightState::MISSION_COMPLETE:
+                local_rc.pitch = RC_CENTER;
+                local_rc.throttle = RC_CENTER;
+                local_rc.aux_drop = 1000; 
+                break;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        {
+            std::lock_guard<std::mutex> lock(shared.mtx);
+            shared.output_rc = local_rc;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 10 Гц
     }
-
-    close(sock);
-    std::cout << "[⚙️ IO_THREAD] UDP сокет закрыт. Поток успешно остановлен.\n";
+    std::cout << "[🧠 MissionProcessor] Потік обробки логіки зупинено.\n";
 }
-
-            

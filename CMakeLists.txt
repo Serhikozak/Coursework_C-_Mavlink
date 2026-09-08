@@ -12,7 +12,7 @@ find_package(Threads REQUIRED)
 set(SOURCES
     src/main.cpp
     src/MissionProcessor.cpp
-    src/DroneStateMachine.cpp
+    
     src/DroneAutopilotImpl.cpp
 )
 

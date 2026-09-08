@@ -97,32 +97,32 @@ CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /MavLink_Autopilot/src/MissionProcessor.cpp -o CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.s
 
-CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o: CMakeFiles/autopilot_node.dir/flags.make
-CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o: /MavLink_Autopilot/src/DroneStateMachine.cpp
-CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o: CMakeFiles/autopilot_node.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/MavLink_Autopilot/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o -MF CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o.d -o CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o -c /MavLink_Autopilot/src/DroneStateMachine.cpp
+CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o: CMakeFiles/autopilot_node.dir/flags.make
+CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o: /MavLink_Autopilot/src/DroneAutopilotImpl.cpp
+CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o: CMakeFiles/autopilot_node.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/MavLink_Autopilot/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o -MF CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o.d -o CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o -c /MavLink_Autopilot/src/DroneAutopilotImpl.cpp
 
-CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /MavLink_Autopilot/src/DroneStateMachine.cpp > CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.i
+CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /MavLink_Autopilot/src/DroneAutopilotImpl.cpp > CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.i
 
-CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /MavLink_Autopilot/src/DroneStateMachine.cpp -o CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.s
+CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /MavLink_Autopilot/src/DroneAutopilotImpl.cpp -o CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.s
 
 # Object files for target autopilot_node
 autopilot_node_OBJECTS = \
 "CMakeFiles/autopilot_node.dir/src/main.cpp.o" \
 "CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.o" \
-"CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o"
+"CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o"
 
 # External object files for target autopilot_node
 autopilot_node_EXTERNAL_OBJECTS =
 
 autopilot_node: CMakeFiles/autopilot_node.dir/src/main.cpp.o
 autopilot_node: CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.o
-autopilot_node: CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o
+autopilot_node: CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o
 autopilot_node: CMakeFiles/autopilot_node.dir/build.make
 autopilot_node: CMakeFiles/autopilot_node.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/MavLink_Autopilot/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable autopilot_node"
