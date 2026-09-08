@@ -13,14 +13,14 @@ set(SOURCES
     src/main.cpp
     src/MissionProcessor.cpp
     src/DroneStateMachine.cpp
+    src/DroneAutopilotImpl.cpp
 )
 
 add_executable(autopilot_node ${SOURCES})
 target_link_libraries(autopilot_node PRIVATE Threads::Threads)
 target_include_directories(autopilot_node PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/mavlink
-    ${CMAKE_CURRENT_SOURCE_DIR}/mavlink/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/mavlink/development     
+    ${CMAKE_CURRENT_SOURCE_DIR}/mavlink/include
+        
 )    
  
