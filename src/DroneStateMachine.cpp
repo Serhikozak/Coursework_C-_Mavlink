@@ -1,9 +1,12 @@
 #include "../include/DroneAutopilotImpl.h"
 #include "../include/AnaliticalSolver.h"
+#include "../include/MissionProcessor.h"
 #include <cmath>
 #include <iostream>
 #include <chrono>
 #include <algorithm>
+
+MissionProcessor processor; // Глобальний об'єкт MissionProcessor для логування та перевірки стабільності польоту
 
 // ПОТІК 2: Обробник місії та станів (MissionProcessor / FSM)
 void DroneAutopilotImpl::runMissionProcessor(SharedData& shared) {
@@ -100,6 +103,8 @@ void DroneAutopilotImpl::runMissionProcessor(SharedData& shared) {
                 float yaw_error = target_angle - local_telemetry.current_yaw;
                 while (yaw_error > M_PI)  yaw_error -= 2.0f * M_PI;
                 while (yaw_error < -M_PI) yaw_error += 2.0f * M_PI;
+
+                processor.logBallistics(Z0, V0, tof, drop_lead_distance, dist_to_target);
                 
                 if (std::abs(yaw_error) > 0.05f) {
                     local_rc.yaw = RC_CENTER + std::clamp(static_cast<int>(yaw_error * 150.0f), -150, 150);

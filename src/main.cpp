@@ -1,4 +1,5 @@
 #include "../include/AutopilotFactory.h"
+#include "../include/Types.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -6,6 +7,16 @@
 int main() {
     // 1. Створюємо структуру спільної пам'яті для обміну між потоками
     SharedData shared_resources;
+
+    shared_resources.is_running = true;
+    shared_resources.operator_switch = true; // Тумблер оператора в положенні "АВТО"
+    shared_resources.link_lost = false;
+    shared_resources.target_found = false;
+
+    // Імітуємо початкову висоту польоту (NED Z: -30 метрів означає 30м над землею)
+    shared_resources.telemetry.z = -30.0f;
+    shared_resources.telemetry.groundSpeed = 15.0f; // Початкова швидкість 15 м/с
+    shared_resources.telemetry.current_yaw = 0.0f;  // Курс строго на Північ
 
     // 2. Використовуємо паттерн Фабрика для створення об'єкта автопілота
     std::unique_ptr<IDroneAutopilot> autopilot = 

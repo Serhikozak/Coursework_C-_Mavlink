@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o"
+  "CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o.d"
   "CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o"
   "CMakeFiles/autopilot_node.dir/src/DroneStateMachine.cpp.o.d"
   "CMakeFiles/autopilot_node.dir/src/MissionProcessor.cpp.o"

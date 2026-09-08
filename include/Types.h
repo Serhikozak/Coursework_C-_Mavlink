@@ -1,36 +1,3 @@
-
-
-
-
-
-
-
-// Формат виводу — такий самий, як керування від пульта
-struct RcChannels {
-    int roll = RC_CENTER;
-    int pitch = RC_CENTER;
-    int throttle = RC_CENTER;
-    int yaw = RC_CENTER;
-    int aux_drop = 1000; // Канал 6: 1000 - закрито, 2000 - скид
-};
-
-// Спільні ресурси для потокобезпечного обміну даними між потоками IO та MissionProcessor
-struct SharedData {
-    Telemetry telemetry;
-    RcChannels output_rc;
-    Coord target_pos;
-    std::mutex mtx; 
-    
-    std::atomic<bool> operator_switch{true};
-    std::atomic<bool> link_lost{false};
-    std::atomic<bool> is_running{true};
-    std::atomic<bool> target_found{false};
-};
-
-
-
-
-
 #pragma once
 #include <mutex>
 #include <atomic>
@@ -40,7 +7,7 @@ constexpr int RC_CENTER      = 1500;
 constexpr int RC_MAX_FORWARD = 1100; // Максимальне прискорення вперед
 constexpr int RC_MIN_FORWARD = 1420; // Плавний рух
 constexpr int RC_IGNORE      = 0;    // Передати контроль оператору
-
+// ПАРАМЕТРИ ТА КОНФІГУРАЦІЯ MAVLINK 2
 constexpr uint8_t  MAV_SYS_ID = 1;
 constexpr uint8_t  MAV_COMP_ID      = 1;
 constexpr uint16_t MAV_TARGET_PORT  = 14550; // UDP порт 14550

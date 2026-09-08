@@ -26,7 +26,8 @@ public:
         float phi = std::acos(arg);
         float t   = 2 * std::sqrt(-p / 3) * std::cos((phi + 4 * static_cast<float>(M_PI)) / 3) - b / (3 * a);
         
-        return t > 0 ? t : std::sqrt(2.0f * Z0 / 9.81f);
+        //return t > 0 ? t : std::sqrt(2.0f * Z0 / 9.81f);
+        return (t > 0.01f && !std::isnan(t) && !std::isinf(t)) ? t : std::sqrt(2.0f * Z0 / 9.81f);
     }
 
     // Расчет горизонтального смещения (баллистического выноса)
@@ -46,7 +47,9 @@ public:
                                     / (36 * (1 + l2) * std::pow(m, 4));
 
         float total_distance = Linear_component + Quadratic_component + Cubic_component + fourth_component + fifth_component;
-        return total_distance;
+        //return total_distance;
+        return (std::isnan(total_distance) || std::isinf(total_distance) || total_distance < 0.0f) ? (t * V0) : total_distance;
+    
 
         
 

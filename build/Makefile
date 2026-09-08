@@ -129,6 +129,30 @@ autopilot_node/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/autopilot_node.dir/build.make CMakeFiles/autopilot_node.dir/build
 .PHONY : autopilot_node/fast
 
+src/DroneAutopilotImpl.o: src/DroneAutopilotImpl.cpp.o
+.PHONY : src/DroneAutopilotImpl.o
+
+# target to build an object file
+src/DroneAutopilotImpl.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/autopilot_node.dir/build.make CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.o
+.PHONY : src/DroneAutopilotImpl.cpp.o
+
+src/DroneAutopilotImpl.i: src/DroneAutopilotImpl.cpp.i
+.PHONY : src/DroneAutopilotImpl.i
+
+# target to preprocess a source file
+src/DroneAutopilotImpl.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/autopilot_node.dir/build.make CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.i
+.PHONY : src/DroneAutopilotImpl.cpp.i
+
+src/DroneAutopilotImpl.s: src/DroneAutopilotImpl.cpp.s
+.PHONY : src/DroneAutopilotImpl.s
+
+# target to generate assembly for a file
+src/DroneAutopilotImpl.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/autopilot_node.dir/build.make CMakeFiles/autopilot_node.dir/src/DroneAutopilotImpl.cpp.s
+.PHONY : src/DroneAutopilotImpl.cpp.s
+
 src/DroneStateMachine.o: src/DroneStateMachine.cpp.o
 .PHONY : src/DroneStateMachine.o
 
@@ -210,6 +234,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... autopilot_node"
+	@echo "... src/DroneAutopilotImpl.o"
+	@echo "... src/DroneAutopilotImpl.i"
+	@echo "... src/DroneAutopilotImpl.s"
 	@echo "... src/DroneStateMachine.o"
 	@echo "... src/DroneStateMachine.i"
 	@echo "... src/DroneStateMachine.s"
