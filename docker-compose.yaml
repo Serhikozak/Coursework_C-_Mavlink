@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  sitl:
+    image: ardupilot-sitl-perfect:v2
+    build: 
+      context: .
+      dockerfile: Dockerfile.sitl
+    container_name: ardupilotv1
+     # Відкриваємо порти наружу, щоб пробросити TCP 5760 в мережу Docker
+    ports:
+      - "5760:5760"      
+    #command: sim_vehicle.py -v ArduCopter --no-mavproxy --custom-location=50.4501,30.5234,0,0
+    command: ["./arducopter", "-S", "--model", "+", "--speedup", "1", "--defaults", "/ardupilot/copter.parm", "--home", "50.4501,30.5234,0,0"]
+    restart: always
+
+  mavproxyy:
+    image: sparlane/mavproxy
+    container_name: mavproxy_router
+    depends_on:
+      - sitl
+    command: --daemon --master=tcp:sitl:5760 --out=udp:host.docker.internal:14550
+    environment:
+      - DISPLAY=
+      - AUTOTEST_HEADLESS=1
+      # Відкриваємо UDP порт для QGroundControl  
+    ports:
+      - "14550:14550/udp"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
+
