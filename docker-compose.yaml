@@ -15,7 +15,10 @@ services:
     restart: always
 
   mavproxyy:
-    image: sparlane/mavproxy
+    image: skozakov/mavproxy:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.mavproxy
     container_name: mavproxy_router
     depends_on:
       - sitl
