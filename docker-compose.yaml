@@ -7,13 +7,27 @@ services:
       context: .
       dockerfile: Dockerfile.sitl
     container_name: ardupilotv1
-     # Відкриваємо порти наружу, щоб пробросити TCP 5760 в мережу Docker
+     # Відкриваємо порти наружу,  TCP 5760 для QGC, 5763 для Малини 
     ports:
-      - "5760:5760"      
-    #command: sim_vehicle.py -v ArduCopter --no-mavproxy --custom-location=50.4501,30.5234,0,0
-    command: ["./arducopter", "-S", "--model", "+", "--speedup", "1", "--defaults", "/ardupilot/copter.parm", "--home", "50.4501,30.5234,0,0"]
+      - "5760:5760"
+      - "5763:5763"
+    privileged: true
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    command: [
+      "./arducopter",
+      "-S",
+      "--model", "+",
+      "--speedup", "1",
+      #"--defaults",
+      "/ardupilot/copter.param",
+      "--home", "50.4501,30.5234,18,0",
+      "add-param", "SERIAL2_BAUD=115",
+      "--serial2", "/dev/ttyUSB0"
+    ]
     restart: always
 
+     
   mavproxyy:
     image: skozakov/mavproxy:latest
     build:
