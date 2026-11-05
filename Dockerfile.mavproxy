@@ -16,6 +16,7 @@ RUN apt-get update -y && \
 # 3. Оновлюємо pip та встановлюємо суворі версії бібліотек під Python 3.9
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install --no-cache-dir --no-compile --break-system-packages \
+    future \
     pymavlink \
     mavproxy==1.8.70
 
