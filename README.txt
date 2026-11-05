@@ -96,4 +96,18 @@
 
 
  47.512620, 35.817530
+ Windows: usbipd list
+          usbipd bind --busid 2-2
+          usbipd attach --wsl --busid 2-2
+ WSL:  docker-compose up -d
+       sudo socat TCP:127.0.0.1:5763 /dev/ttyUSB0,b115200,raw,echo=0 (в іншому терміналі)
+
+
+
+
+ sudo cat /dev/ttyAMA0
+  echo "Hello from Raspberry Pi TX line!" | sudo tee /dev/ttyAMA0
+
+echo "TEST_DATA" | sudo tee /dev/ttyAMA0   з Mavproxy on Windows
+sudo minicom -D /dev/ttyAMA0 -b 115200  Малина
 
