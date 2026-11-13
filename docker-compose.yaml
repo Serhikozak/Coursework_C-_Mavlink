@@ -7,24 +7,27 @@ services:
       context: .
       dockerfile: Dockerfile.sitl
     container_name: ardupilotv1
+    
      # Відкриваємо порти наружу,  TCP 5760 для QGC, 5763 для Малини 
     ports:
       - "5760:5760"
       - "5763:5763"
+     
     privileged: true
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    #devices:
+    #  - "/dev/ttyUSB0:/dev/ttyUSB0"
+    volumes:
+      - "./custom.parm:/ardupilot/custom.parm"
     command: [
       "./arducopter",
       "-S",
       "--model", "+",
       "--speedup", "1",
-      #"--defaults",
-      "/ardupilot/copter.param",
-      "--home", "50.4501,30.5234,18,0",
-      "add-param", "SERIAL2_BAUD=115",
-      "--serial2", "/dev/ttyUSB0"
+      "--home", "48.941553,24.763887,18,0",
+      "--defaults", "/ardupilot/custom.parm"
+          
     ]
+    
     restart: always
 
      
@@ -34,15 +37,19 @@ services:
       context: .
       dockerfile: Dockerfile.mavproxy
     container_name: mavproxy_router
+    
     depends_on:
       - sitl
-    command: --daemon --master=tcp:sitl:5760 --out=udp:host.docker.internal:14550
+    command: --daemon --master=tcp:sitl:5760 --out=udp:host.docker.internal:14550 --out=tcpin:0.0.0.0:5765
     environment:
       - DISPLAY=
       - AUTOTEST_HEADLESS=1
-      # Відкриваємо UDP порт для QGroundControl  
+      - LC_ALL=C.UTF-8
+      - LANG=C.UTF-8
+    # Відкриваємо UDP порт для QGroundControl  
     ports:
       - "14550:14550/udp"
+      - "5765:5765"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: always
