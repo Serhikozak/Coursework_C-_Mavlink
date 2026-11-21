@@ -1,0 +1,6 @@
+[submodule "ardupilot_simulator/vehicle"]
+	path = ardupilot_simulator/vehicle
+	url = https://github.com/Ardupilot/ardupilot.git
+[submodule "companion_comp/mavlink"]
+	path = companion_comp/mavlink
+	url = https://github.com/mavlink/mavlink.git
