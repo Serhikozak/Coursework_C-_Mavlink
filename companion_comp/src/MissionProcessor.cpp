@@ -18,23 +18,50 @@
 // ПОТІК 2: Обробник місії та станів (MissionProcessor / FSM)
 void DroneAutopilotImpl::runMissionProcessor(SharedData& shared) {
     std::cout << "[🧠 MissionProcessor] Потік обробки логіки FSM запущен (Частота: 10 Гц).\n";
+
+    // [ФІКС ТЕСТУ]: Змінна для імітації руху на ціль без симулятора
+    float mock_step = 0.0f;
     
     while (shared.is_running) {
         RcChannels local_rc;
+
+        bool local_target_found = shared.target_found.load();
         
-        if (shared.link_lost || !shared.operator_switch) {
-            m_state = FlightState::MANUAL_OVERRIDE;
+        //if (shared.link_lost || !shared.operator_switch) {
+            //m_state = FlightState::MANUAL_OVERRIDE;
+        //}
+        if (!local_target_found) {
+            if (shared.link_lost || !shared.operator_switch) {
+                m_state = FlightState::MANUAL_OVERRIDE;
+            }
         }
 
         Telemetry local_telemetry;
         Coord local_target;
-        bool local_target_found;
+        
         {
             std::lock_guard<std::mutex> lock(shared.mtx);
             local_telemetry = shared.telemetry;
             local_target = shared.target_pos;
-            local_target_found = shared.target_found;
+            //local_target_found = shared.target_found;
+        
+
+        // [ФІКС ТЕСТУ]: Штучно рухаємо дрон вперед на ціль, якщо активовано атаку
+            if (m_state == FlightState::TARGET_ATTACK) {
+                mock_step += 1.5f; 
+                local_telemetry.pos.x = mock_step;
+                local_telemetry.pos.y = mock_step;
+            }
         }
+        
+         if (local_target_found && m_state == FlightState::PATROLLING) {
+            m_state = FlightState::TARGET_ATTACK;
+            std::cout << "[MissionProcessor] [⚠️ ALERT] Зміна стану -> [2] ПЕРЕХВАТ ТА АТАКА ЦІЛІ!\n";
+        }
+
+        std::cout << "[DEBUG] Поточний стан FSM: " << static_cast<int>(m_state) 
+                  << " | target_found: " << local_target_found 
+                  << " | op_switch: " << shared.operator_switch.load() << "\n";
 
         switch (m_state) {
             case FlightState::MANUAL_OVERRIDE:
@@ -81,13 +108,21 @@ void DroneAutopilotImpl::runMissionProcessor(SharedData& shared) {
             }
 
             case FlightState::TARGET_ATTACK: {
+
+                 //if (shared.link_lost || local_telemetry.groundSpeed >= 0.0f) {
+                // Плавне наближення координат для імітації польоту
+                //std::lock_guard<std::mutex> lock(shared.mtx);
+               // shared.telemetry.pos.x += 1.5f; // рухаємось на 1.5 метра за крок
+                //shared.telemetry.pos.y += 1.5f;
+            //}
+
                 float dist_to_target = currentPointToTarget(local_telemetry.pos, local_target);
                 
                 float Z0 = -local_telemetry.z; 
-                if (Z0 < 1.0f) Z0 = 10.0f;          
+                if (Z0 < 1.0f) Z0 = 15.0f;          
                 
                 float V0 = local_telemetry.groundSpeed; 
-                if (V0 < 0.1f) V0 = 0.1f;               
+                if (V0 < 5.0f) V0 = 12.5f;               
                 
                 constexpr float m = 1.5f;   
                 constexpr float d = 0.15f;  
@@ -117,8 +152,27 @@ void DroneAutopilotImpl::runMissionProcessor(SharedData& shared) {
                 } else {
                     local_rc.pitch = 1430;
                     local_rc.throttle = 1500;
-                    
+                     // --- КЕРУВАННЯ ШВИДКІСТЮ ТА ТРИГЕР СКIDУ (CCIP) ---
                     if (dist_to_target <= drop_lead_distance) {
+                        local_rc.pitch = RC_MAX_FORWARD;
+                        local_rc.throttle = 1650;
+
+                        {
+                        std::lock_guard<std::mutex> lock(shared.mtx);
+                        float dx = local_target.x - shared.telemetry.pos.x;
+                        float dy = local_target.y - shared.telemetry.pos.y;
+                        float step = V0 * 0.1f; // Крок руху за 100мс
+                        
+                        if (dist_to_target > step) {
+                            shared.telemetry.pos.x += (dx / dist_to_target) * step;
+                            shared.telemetry.pos.y += (dy / dist_to_target) * step;
+                        }
+                        }
+                        //m_state = FlightState::PAYLOAD_DROP; 
+                    }
+                    else {
+                        local_rc.pitch = 1430;
+                        local_rc.throttle = 1500;
                         m_state = FlightState::PAYLOAD_DROP; 
                     }
                 }

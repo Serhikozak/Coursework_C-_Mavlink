@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/MavLink_Autopilot/include -I/MavLink_Autopilot/mavlink/include
 
-CXX_FLAGS =  -Wno-address-of-packed-member -std=gnu++17
+CXX_FLAGS =  -Wno-address-of-packed-member -g -std=gnu++17
 

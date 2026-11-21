@@ -12,7 +12,9 @@ services:
     ports:
       - "5760:5760"
       - "5763:5763"
-     
+      
+    #extra_hosts:
+    #  - "host.docker.internal:172.20.201.24"  
     privileged: true
     #devices:
     #  - "/dev/ttyUSB0:/dev/ttyUSB0"
@@ -21,8 +23,9 @@ services:
     command: [
       "./arducopter",
       "-S",
-      "--model", "+",
+      "--model", "JSON",
       "--speedup", "1",
+      "--sim-address=172.20.201.24",
       "--home", "48.941553,24.763887,18,0",
       "--defaults", "/ardupilot/custom.parm"
           
